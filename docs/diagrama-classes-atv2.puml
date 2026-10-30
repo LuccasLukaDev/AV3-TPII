@@ -1,0 +1,218 @@
+@startuml CineBridge_ATV2_Padroes_Criacionais
+title CineBridge Recommendation — ATV2\nPrototype + Factory Method + Abstract Factory\n(+ Strategy, Template Method, Observer, Visitor)
+
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam linetype ortho
+
+' ========== DOMAIN ==========
+package "Domain" {
+  interface Projeto <<interface>> {
+    + id: string
+    + genero: string
+    + duracaoEstimada: number
+    + orcamentoTotal: number
+    + dataEntrega: string
+    + tipoCaptacao: CaptureType
+    + localizacao: string
+    + papeis: PapelObrigatorio[]
+    + estrategia?: string
+  }
+
+  interface ProjectVisitor <<interface>> {
+    + visitProject(project)
+    + visitProfessional(profissional, papel?)
+    + getResult()
+  }
+
+  interface RecommendationStrategy <<interface>> {
+    + recommend(project, professionals): Recomendacao[]
+  }
+}
+
+' ========== PROTOTYPE ==========
+package "Prototype" {
+  interface ProjetoPrototype {
+    + prototypeId: string
+    + clone(): ProjetoPrototype
+  }
+
+  abstract class ProjetoBase {
+    + clone(): ProjetoPrototype
+    # toData(): Projeto
+  }
+
+  class ProjetoDocumentario {
+    + restricoes
+    + clone(): ProjetoDocumentario
+  }
+
+  class ProjetoAnimacao {
+    + restricoes
+    + clone(): ProjetoAnimacao
+  }
+
+  class ProjetoPublicitario {
+    + restricoes
+    + clone(): ProjetoPublicitario
+  }
+
+  class RegistroPrototipos <<registry>> {
+    + registrar(p)
+    + obter(id)
+    + clonar(id, overrides?)
+    + listar()
+  }
+
+  Projeto <|.. ProjetoPrototype
+  ProjetoPrototype <|.. ProjetoBase
+  ProjetoBase <|-- ProjetoDocumentario
+  ProjetoBase <|-- ProjetoAnimacao
+  ProjetoBase <|-- ProjetoPublicitario
+  RegistroPrototipos ..> ProjetoPrototype : gerencia
+}
+
+' ========== ABSTRACT FACTORY ==========
+package "Abstract Factory / Factory Method" {
+  interface FabricaProjeto {
+    + tipo: string
+    + criarProjeto(dados?): ProjetoPrototype
+    + criarValidador(): ProjectVisitor
+    + criarRecomendador(estrategia?): RecommendationStrategy
+    + criarNotificador(): NotificationSubject
+  }
+
+  class FabricaDocumentario
+  class FabricaAnimacao
+  class FabricaPublicitario
+
+  class SeletorFabrica <<registry>> {
+    + obter(tipo): FabricaProjeto
+    + registrar(tipo, fabrica)
+  }
+
+  FabricaProjeto <|.. FabricaDocumentario
+  FabricaProjeto <|.. FabricaAnimacao
+  FabricaProjeto <|.. FabricaPublicitario
+  SeletorFabrica ..> FabricaProjeto : seleciona
+
+  FabricaDocumentario ..> ProjetoDocumentario : cria
+  FabricaAnimacao ..> ProjetoAnimacao : cria
+  FabricaPublicitario ..> ProjetoPublicitario : cria
+}
+
+' ========== VALIDATORS ==========
+package "Validadores (por tipo)" {
+  abstract class ValidadorProjetoBase {
+    + visitProject()
+    + visitProfessional()
+    + getResult()
+  }
+
+  class ValidadorDocumentario
+  class ValidadorAnimacao
+  class ValidadorPublicitario
+
+  ProjectVisitor <|.. ValidadorProjetoBase
+  ValidadorProjetoBase <|-- ValidadorDocumentario
+  ValidadorProjetoBase <|-- ValidadorAnimacao
+  ValidadorProjetoBase <|-- ValidadorPublicitario
+
+  FabricaDocumentario ..> ValidadorDocumentario : cria
+  FabricaAnimacao ..> ValidadorAnimacao : cria
+  FabricaPublicitario ..> ValidadorPublicitario : cria
+}
+
+' ========== STRATEGY (ATV1) ==========
+package "Strategy (ATV1)" {
+  class CosineSimilarityStrategy
+  class CollaborativeFilteringStrategy
+  class LowBudgetRulesStrategy
+
+  RecommendationStrategy <|.. CosineSimilarityStrategy
+  RecommendationStrategy <|.. CollaborativeFilteringStrategy
+  RecommendationStrategy <|.. LowBudgetRulesStrategy
+
+  FabricaDocumentario ..> CosineSimilarityStrategy : default
+  FabricaAnimacao ..> CollaborativeFilteringStrategy : default
+  FabricaPublicitario ..> LowBudgetRulesStrategy : default
+}
+
+' ========== OBSERVER (ATV1) ==========
+package "Observer (ATV1)" {
+  interface Observer {
+    + update(event, data)
+  }
+
+  class NotificationSubject {
+    + attach(o)
+    + detach(o)
+    + notify(event, data)
+  }
+
+  class AuditObserver
+  class EmailObserver
+
+  Observer <|.. AuditObserver
+  Observer <|.. EmailObserver
+  NotificationSubject o--> Observer
+}
+
+' ========== TEMPLATE METHOD ==========
+package "Template Method" {
+  abstract class TeamCompositionOrchestrator {
+    # strategy: RecommendationStrategy
+    # fabrica?: FabricaProjeto
+    # validador?: ProjectVisitor
+    # notificador?: NotificationSubject
+    + compose(project, professionals): EquipeSugerida
+    # normalizeInput()
+    # validateBudgetAndDeadline()
+    # applyStrategy()
+    # postProcess()
+  }
+
+  class DefaultTeamCompositionOrchestrator
+
+  TeamCompositionOrchestrator <|-- DefaultTeamCompositionOrchestrator
+  TeamCompositionOrchestrator --> RecommendationStrategy
+  TeamCompositionOrchestrator --> FabricaProjeto : opcional
+  TeamCompositionOrchestrator --> ProjectVisitor
+  TeamCompositionOrchestrator --> NotificationSubject
+}
+
+' ========== SERVICE ==========
+package "Application" {
+  class RecommendationService {
+    + recommend(project)
+    + recommendForRole(project, papel)
+    + criarProjetoAPartirDePrototipo(id, overrides?)
+    + listarPrototipos()
+    + obterFabrica(tipo)
+  }
+
+  RecommendationService --> SeletorFabrica
+  RecommendationService --> RegistroPrototipos
+  RecommendationService --> DefaultTeamCompositionOrchestrator
+}
+
+note right of FabricaProjeto
+  **Abstract Factory**
+  Família coerente:
+  Projeto + Validador +
+  Recomendador + Notificador
+end note
+
+note right of ProjetoBase
+  **Prototype**
+  clone() = cópia profunda
+  de papéis e restrições
+end note
+
+note bottom of TeamCompositionOrchestrator
+  **Template Method**
+  Fluxo fixo; sem if de tipo.
+  Objetos vêm da fábrica.
+end note
+
+@enduml

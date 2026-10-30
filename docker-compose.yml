@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: cinebridge-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: senha123
+      POSTGRES_DB: cinebridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - cinebridge-postgres-data:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cinebridge-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://postgres:senha123@postgres:5432/cinebridge?schema=public"
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  cinebridge-postgres-data:

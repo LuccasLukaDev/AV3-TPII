@@ -1,0 +1,106 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profissional {
+  id                String   @id @default(cuid())
+  nome              String
+  especialidades    String[]
+  precoMedio        Float
+  localizacao       String
+  vetorCompetencias Float[]
+  historico         String[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  disponibilidades Disponibilidade[]
+  competencias     Competencia[]
+  avaliacoes       Avaliacao[]
+  recomendacoes    Recomendacao[]
+  convites         Convite[]
+}
+
+model Disponibilidade {
+  id             String       @id @default(cuid())
+  inicio         DateTime
+  fim            DateTime
+  profissionalId String
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+}
+
+model Competencia {
+  id             String       @id @default(cuid())
+  nome           String
+  nivel          Int
+  profissionalId String
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+}
+
+model Avaliacao {
+  id             String   @id @default(cuid())
+  projetoId      String
+  nota           Float
+  comentario     String?
+  profissionalId String
+  createdAt      DateTime @default(now())
+
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+}
+
+model Projeto {
+  id              String   @id @default(cuid())
+  genero          String
+  duracaoEstimada Int
+  orcamentoTotal  Float
+  dataEntrega     DateTime
+  tipoCaptacao    String
+  localizacao     String
+  estrategia      String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  papeis        PapelObrigatorio[]
+  recomendacoes Recomendacao[]
+  convites      Convite[]
+}
+
+model PapelObrigatorio {
+  id        String @id @default(cuid())
+  papel     String
+  peso      Float
+  projetoId String
+
+  projeto Projeto @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+}
+
+model Recomendacao {
+  id             String   @id @default(cuid())
+  papel          String
+  score          Float
+  motivo         String
+  projetoId      String
+  profissionalId String
+  createdAt      DateTime @default(now())
+
+  projeto      Projeto      @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+}
+
+model Convite {
+  id             String   @id @default(cuid())
+  status         String   @default("pendente")
+  papel          String
+  projetoId      String
+  profissionalId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  projeto      Projeto      @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+}

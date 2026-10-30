@@ -1,0 +1,37 @@
+MUITO UTIL !!! - npx prisma studio
+
+
+- trocar url do repositorio no readme.md
+
+
+
+O que ainda falta para ficar bem alinhado com o PDF é:
+1. Persistência real (Prisma ou TypeORM + PostgreSQL) - FEITO
+
+Hoje está com repositório em memória (mock).
+O PDF pede explicitamente PostgreSQL + ORM.
+
+2. Testes unitários + de integração
+
+O PDF exige testes unitários e de integração para cada padrão e cobertura superior a 80%.
+Isso ainda não foi entregue.
+
+3. Fluxo completo de Convite (Aceitar / Recusar / Substituir)
+
+O PDF fala claramente que o produtor pode aceitar, rejeitar ou substituir membros.
+Cada substituição deve disparar nova rodada de recomendações.
+Entidade Convite precisa existir de forma mais completa.
+
+4. Demonstração concreta dos 4 padrões - FEITO
+
+Mostrar com casos de uso reais:
+Trocar a Strategy e ver o resultado mudar
+Template Method mantendo o fluxo invariável
+Observers reagindo independentemente
+Visitors fazendo operações diferentes na mesma estrutura
+
+
+5. (Opcional mas recomendado)
+
+Diagrama PlantUML atualizado
+Um pouco mais de tolerância a falhas (fallback quando o repositório falha)

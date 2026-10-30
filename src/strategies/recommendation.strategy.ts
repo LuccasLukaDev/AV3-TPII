@@ -1,0 +1,1 @@
+export { RecommendationStrategy } from '../domain/interfaces';
